@@ -1,0 +1,1083 @@
+<!doctype html>
+<title>Protocole Lerna — GDD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#f2ede0;
+  --surface:#fffcf5;
+  --surface-raised:#ffffff;
+  --ink:#1c2029;
+  --ink-soft:#565c6b;
+  --ink-faint:#8a8e9c;
+  --line:rgba(28,32,41,0.15);
+  --line-strong:rgba(28,32,41,0.28);
+  --accent:#a3241d;
+  --accent-ink:#ffffff;
+  --accent-soft:rgba(163,36,29,0.09);
+  --accent2:#1f6f5c;
+  --accent2-soft:rgba(31,111,92,0.09);
+  --mono-bg:#1b1f26;
+  --mono-fg:#d7f5e4;
+  --mono-line:rgba(215,245,228,0.18);
+  --shadow:0 1px 2px rgba(28,32,41,0.06), 0 8px 24px -12px rgba(28,32,41,0.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#13151b;
+    --surface:#1a1d25;
+    --surface-raised:#20242e;
+    --ink:#ece8dc;
+    --ink-soft:#b7bac4;
+    --ink-faint:#7d8290;
+    --line:rgba(236,232,220,0.14);
+    --line-strong:rgba(236,232,220,0.26);
+    --accent:#ef6a5c;
+    --accent-ink:#1a0906;
+    --accent-soft:rgba(239,106,92,0.14);
+    --accent2:#4fd9ab;
+    --accent2-soft:rgba(79,217,171,0.13);
+    --mono-bg:#0d0f13;
+    --mono-fg:#8ff0c4;
+    --mono-line:rgba(143,240,196,0.16);
+    --shadow:0 1px 2px rgba(0,0,0,0.3), 0 12px 30px -14px rgba(0,0,0,0.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13151b;
+  --surface:#1a1d25;
+  --surface-raised:#20242e;
+  --ink:#ece8dc;
+  --ink-soft:#b7bac4;
+  --ink-faint:#7d8290;
+  --line:rgba(236,232,220,0.14);
+  --line-strong:rgba(236,232,220,0.26);
+  --accent:#ef6a5c;
+  --accent-ink:#1a0906;
+  --accent-soft:rgba(239,106,92,0.14);
+  --accent2:#4fd9ab;
+  --accent2-soft:rgba(79,217,171,0.13);
+  --mono-bg:#0d0f13;
+  --mono-fg:#8ff0c4;
+  --mono-line:rgba(143,240,196,0.16);
+  --shadow:0 1px 2px rgba(0,0,0,0.3), 0 12px 30px -14px rgba(0,0,0,0.6);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Source Serif 4', Georgia, 'Times New Roman', serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{
+  font-family:'Oswald', 'Arial Narrow', sans-serif;
+  text-transform:uppercase;
+  letter-spacing:0.02em;
+  color:var(--ink);
+  text-wrap:balance;
+  margin:0;
+}
+.mono{font-family:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;}
+a{color:var(--accent2);}
+img{max-width:100%;}
+
+/* ---------- layout shell ---------- */
+.shell{
+  display:grid;
+  grid-template-columns:230px minmax(0,1fr);
+  max-width:1180px;
+  margin:0 auto;
+}
+.toc{
+  position:sticky;
+  top:0;
+  align-self:start;
+  height:100vh;
+  overflow-y:auto;
+  padding:28px 18px 28px 24px;
+  border-right:1px solid var(--line);
+}
+.toc-brand{
+  font-family:'IBM Plex Mono';
+  font-size:11px;
+  letter-spacing:0.14em;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:sec;}
+.toc li{counter-increment:sec;margin-bottom:2px;}
+.toc a{
+  display:flex;
+  gap:8px;
+  text-decoration:none;
+  color:var(--ink-soft);
+  font-family:'IBM Plex Mono';
+  font-size:12.5px;
+  padding:6px 8px;
+  border-radius:3px;
+  line-height:1.35;
+}
+.toc a:before{
+  content:counter(sec,decimal-leading-zero);
+  color:var(--ink-faint);
+  flex:none;
+}
+.toc a:hover{background:var(--accent-soft);color:var(--ink);}
+
+main{padding:0 44px 120px;min-width:0;}
+.page{max-width:760px;}
+.page-wide{max-width:100%;}
+
+/* ---------- cover ---------- */
+.cover{
+  position:relative;
+  padding:56px 0 40px;
+  border-bottom:3px double var(--line-strong);
+  margin-bottom:44px;
+  max-width:100%;
+}
+.stamp{
+  position:absolute;
+  top:44px;
+  right:0;
+  border:3px solid var(--accent);
+  color:var(--accent);
+  font-family:'Oswald';
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.12em;
+  padding:9px 14px;
+  transform:rotate(6deg);
+  border-radius:4px;
+  white-space:nowrap;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono';
+  font-size:12px;
+  letter-spacing:0.18em;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:14px;
+  max-width:520px;
+}
+.cover h1{font-size:clamp(38px,6vw,64px);line-height:0.98;max-width:740px;}
+.cover .subtitle{
+  font-family:'Source Serif 4';
+  font-style:italic;
+  color:var(--ink-soft);
+  font-size:19px;
+  margin-top:16px;
+  max-width:600px;
+}
+.meta-strip{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  margin-top:32px;
+  border-top:1px solid var(--line);
+}
+.meta-item{
+  padding:12px 24px 12px 0;
+  margin-right:24px;
+  border-right:1px solid var(--line);
+}
+.meta-item:last-child{border-right:none;}
+.meta-item .k{font-family:'IBM Plex Mono';font-size:10.5px;letter-spacing:0.1em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:4px;}
+.meta-item .v{font-family:'IBM Plex Mono';font-size:13px;color:var(--ink);}
+
+/* ---------- sections ---------- */
+section{margin-bottom:64px;scroll-margin-top:24px;}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;}
+.sec-num{font-family:'IBM Plex Mono';font-size:14px;color:var(--accent);}
+h2{font-size:26px;}
+h3{font-size:17px;margin-top:30px;margin-bottom:10px;color:var(--ink);}
+h3 .tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono';
+  font-size:10px;
+  letter-spacing:0.08em;
+  color:var(--accent2);
+  background:var(--accent2-soft);
+  padding:2px 7px;
+  border-radius:3px;
+  vertical-align:middle;
+  margin-left:8px;
+  text-transform:none;
+}
+p{margin:0 0 14px;max-width:66ch;}
+.lede{font-size:19px;color:var(--ink-soft);max-width:60ch;}
+ul.plain,ol.plain{margin:0 0 16px;padding-left:22px;max-width:66ch;}
+ul.plain li,ol.plain li{margin-bottom:6px;}
+strong{color:var(--ink);}
+
+.pull{
+  border-left:3px solid var(--accent);
+  padding:2px 0 2px 18px;
+  margin:22px 0;
+  font-size:18px;
+  font-style:italic;
+  color:var(--ink);
+  max-width:56ch;
+}
+
+/* ---------- cards / dossier pieces ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:22px 24px;
+  margin:18px 0;
+  box-shadow:var(--shadow);
+}
+.card-wide{max-width:100%;}
+.evidence{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:20px 22px 22px;
+  margin:20px 0;
+  position:relative;
+}
+.evidence .ev-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  border-bottom:1px dashed var(--line-strong);
+  padding-bottom:10px;
+  margin-bottom:14px;
+}
+.evidence .ev-head h4{font-size:16px;}
+.evidence .ev-num{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-faint);}
+.badge{
+  display:inline-block;
+  font-family:'IBM Plex Mono';
+  font-size:10.5px;
+  letter-spacing:0.06em;
+  padding:2px 8px;
+  border-radius:20px;
+  border:1px solid var(--line-strong);
+  color:var(--ink-soft);
+  margin-right:6px;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+
+/* ---------- timeline / journey ---------- */
+.journey{list-style:none;margin:24px 0;padding:0;border-left:2px solid var(--line-strong);max-width:66ch;}
+.journey li{position:relative;padding:0 0 28px 26px;}
+.journey li:last-child{padding-bottom:0;}
+.journey li:before{
+  content:'';
+  position:absolute;
+  left:-6.5px;top:3px;
+  width:11px;height:11px;
+  border-radius:50%;
+  background:var(--surface);
+  border:2px solid var(--accent2);
+}
+.journey .jt{font-family:'IBM Plex Mono';font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:3px;}
+.journey .jb{font-weight:600;color:var(--ink);display:block;margin-bottom:3px;}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:6px;}
+table{border-collapse:collapse;width:100%;font-size:14px;}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+thead th{
+  font-family:'IBM Plex Mono';
+  font-size:10.5px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+  background:var(--surface);
+  border-bottom:1px solid var(--line-strong);
+}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--accent-soft);}
+td.num,th.num{font-family:'IBM Plex Mono';font-variant-numeric:tabular-nums;white-space:nowrap;}
+.impact-H{color:var(--accent);font-weight:600;}
+.impact-M{color:#9c6b16;font-weight:600;}
+.impact-L{color:var(--accent2);font-weight:600;}
+
+/* ---------- code / tech blocks ---------- */
+.stack{
+  background:var(--mono-bg);
+  color:var(--mono-fg);
+  border-radius:6px;
+  padding:20px 22px;
+  margin:18px 0;
+  font-family:'IBM Plex Mono';
+  font-size:13px;
+  box-shadow:var(--shadow);
+}
+.stack h4{font-family:'IBM Plex Mono';color:var(--mono-fg);font-size:12px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;opacity:0.9;}
+.stack ul{margin:0;padding-left:18px;}
+.stack li{margin-bottom:6px;line-height:1.5;}
+.stack code{background:var(--mono-line);padding:1px 5px;border-radius:3px;}
+.stack .lib{color:var(--accent2);}
+
+.topic-row{display:flex;gap:10px;align-items:baseline;font-family:'IBM Plex Mono';font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--mono-line);}
+.topic-row:last-child{border-bottom:none;}
+.topic-row .t{color:var(--accent2);flex:none;min-width:230px;}
+.topic-row .d{color:var(--mono-fg);opacity:0.75;}
+
+/* ---------- feature priority ---------- */
+.prio{border-radius:6px;padding:18px 20px;border:1px solid var(--line);background:var(--surface);}
+.prio h4{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.prio ul{margin:0;padding-left:18px;font-size:14px;}
+.prio li{margin-bottom:7px;}
+
+/* ---------- figure ---------- */
+figure{margin:26px 0;}
+figure svg{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:6px;}
+figcaption{font-family:'IBM Plex Mono';font-size:12px;color:var(--ink-faint);margin-top:10px;max-width:72ch;}
+
+hr.brk{border:none;border-top:1px dashed var(--line-strong);margin:40px 0;}
+
+footer{
+  border-top:3px double var(--line-strong);
+  padding:26px 0 60px;
+  font-family:'IBM Plex Mono';
+  font-size:11.5px;
+  color:var(--ink-faint);
+  max-width:100%;
+}
+
+@media (max-width:880px){
+  .shell{grid-template-columns:1fr;}
+  .toc{position:relative;height:auto;top:auto;border-right:none;border-bottom:1px solid var(--line);padding:16px 20px;}
+  .toc ol{display:flex;flex-wrap:wrap;gap:2px;}
+  main{padding:0 20px 80px;}
+  .grid2,.grid3{grid-template-columns:1fr;}
+  .stamp{position:static;display:inline-block;margin-bottom:18px;transform:rotate(-1deg);}
+}
+
+/* ---------- access gate ---------- */
+#gate{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:var(--bg);
+}
+#gate:before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 34px,
+    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/34px 100%;
+  opacity:0.35;
+  mask-image:radial-gradient(circle at 50% 40%, black, transparent 75%);
+}
+.gate-card{
+  position:relative;
+  width:100%;
+  max-width:360px;
+  background:var(--surface-raised);
+  border:1px solid var(--line-strong);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:32px 30px 28px;
+  text-align:center;
+}
+.gate-lock{
+  font-size:26px;
+  line-height:1;
+  margin-bottom:14px;
+}
+.gate-card .toc-brand{margin-bottom:6px;justify-content:center;}
+.gate-card h2{font-size:19px;margin-bottom:8px;}
+.gate-card p{
+  color:var(--ink-soft);
+  font-size:13.5px;
+  margin:0 0 22px;
+  line-height:1.5;
+}
+#gate-form{display:flex;flex-direction:column;gap:10px;}
+#gate-input{
+  font-family:'IBM Plex Mono';
+  font-size:14px;
+  letter-spacing:0.06em;
+  padding:11px 13px;
+  border:1px solid var(--line-strong);
+  border-radius:4px;
+  background:var(--surface);
+  color:var(--ink);
+  text-align:center;
+}
+#gate-input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+#gate-form button{
+  font-family:'Oswald';
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:11px 14px;
+  border:none;
+  border-radius:4px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  cursor:pointer;
+}
+#gate-form button:hover{filter:brightness(1.08);}
+#gate-form button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+#gate-err{
+  color:var(--accent);
+  font-family:'IBM Plex Mono';
+  font-size:12px;
+  margin-top:2px;
+}
+@keyframes gate-shake{
+  10%,90%{transform:translateX(-1px);}
+  20%,80%{transform:translateX(2px);}
+  30%,50%,70%{transform:translateX(-4px);}
+  40%,60%{transform:translateX(4px);}
+}
+.gate-card.shake{animation:gate-shake 0.4s;}
+@media (prefers-reduced-motion:reduce){
+  .gate-card.shake{animation:none;}
+}
+</style>
+
+<div id="gate">
+  <div class="gate-card" id="gate-card">
+    <div class="gate-lock" aria-hidden="true">🔒</div>
+    <div class="toc-brand">CELLULE ZÉRO-JOUR · ACCÈS RESTREINT</div>
+    <h2>Dossier protégé</h2>
+    <p>Ce GDD n'est pas encore validé par l'équipe.<br>Mot de passe requis pour consulter.</p>
+    <form id="gate-form" autocomplete="off">
+      <input id="gate-input" type="password" placeholder="Mot de passe" autocomplete="off" aria-label="Mot de passe">
+      <button type="submit">Déverrouiller</button>
+      <div id="gate-err" role="alert" hidden>Mot de passe incorrect — réessayez.</div>
+    </form>
+  </div>
+</div>
+
+<style>
+tfoot td{font-weight:600;border-top:1px solid var(--line-strong);background:var(--surface);}
+tr.sub td{color:var(--ink-soft);font-style:italic;}
+.ev-meta{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px;}
+.badge.comp{border-color:var(--accent2);color:var(--accent2);background:var(--accent2-soft);}
+.badge.time{font-variant-numeric:tabular-nums;}
+.split{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 12px;max-width:66ch;}
+.split dt{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding-top:4px;}
+.split dd{margin:0;}
+.card h4.k{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+.card ul{margin:0;padding-left:18px;font-size:14.5px;}
+.card li{margin-bottom:7px;}
+.gauge{display:flex;align-items:center;gap:12px;margin:20px 0 6px;max-width:560px;}
+.gauge .bar{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden;display:flex;}
+.gauge .bar span{height:100%;}
+.gauge .lbl{font-family:'IBM Plex Mono';font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft);white-space:nowrap;}
+@media (max-width:880px){.split{grid-template-columns:1fr;}.split dt{padding-top:8px;}}
+</style>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="toc-brand">CELLULE ZÉRO-JOUR · DOSSIER</div>
+    <ol>
+      <li><a href="#pitch">Vision &amp; concept</a></li>
+      <li><a href="#gameplay">Boucle de jeu</a></li>
+      <li><a href="#scenario">Scénario</a></li>
+      <li><a href="#enigmes">Les 5 épreuves</a></li>
+      <li><a href="#parcours">Parcours minuté</a></li>
+      <li><a href="#eco">Éco-conception</a></li>
+      <li><a href="#tech">Spécs techniques</a></li>
+      <li><a href="#archi">Architecture</a></li>
+      <li><a href="#code">Ce qu'on code</a></li>
+      <li><a href="#materiel">Matériel &amp; budget</a></li>
+      <li><a href="#demarche">Démarche projet</a></li>
+      <li><a href="#prod">Plan de production</a></li>
+      <li><a href="#risques">Risques</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="cover">
+      <span class="stamp">CONFIDENTIEL — GDD</span>
+      <div class="eyebrow">Game Design Document — SAÉ S5.01 · BUT Informatique 305/306</div>
+      <h1>Protocole Lerna</h1>
+      <div class="subtitle">Un escape game où l'on pirate, déchiffre, isole et corrige pour de vrai. Chaque épreuve est une compétence du BUT Informatique, et chaque objet physique sert à débloquer un problème informatique.</div>
+      <div class="meta-strip">
+        <div class="meta-item"><span class="k">Durée</span><span class="v">30 min (45 max)</span></div>
+        <div class="meta-item"><span class="k">Joueurs</span><span class="v">4 à 5</span></div>
+        <div class="meta-item"><span class="k">Public</span><span class="v">Visiteurs JPO, 14 ans +</span></div>
+        <div class="meta-item"><span class="k">Budget</span><span class="v">~116 € / 200 €</span></div>
+        <div class="meta-item"><span class="k">Jalon</span><span class="v">J1 — fin sept. 2026</span></div>
+      </div>
+    </div>
+
+    <!-- 01 -->
+    <section id="pitch" class="page">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Vision &amp; concept</h2></div>
+      <p class="lede">La Cellule Zéro-Jour a un problème : LERNA, un programme laissé par un ancien ingénieur, copie les données de millions de citoyens et s'apprête à les publier. Le service cyber est bloqué sur le périph. Il reste les stagiaires, c'est-à-dire vous, et 30 minutes.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h4 class="k">High concept</h4>
+          <p style="margin:0;">Un thriller cyber de 30 minutes où l'on s'authentifie, fouille un terminal, déchiffre un fichier, isole un serveur sur une vraie baie réseau et corrige du code, avec des objets physiques qui servent chaque fois de clé.</p>
+        </div>
+        <div class="card">
+          <h4 class="k">Genre</h4>
+          <p style="margin:0;">Escape game phygital : aucune épreuve ne se résout seulement à l'écran, aucune seulement dans la salle. L'objet physique donne l'indice ou l'action, l'informatique donne la résolution.</p>
+        </div>
+      </div>
+
+      <h3>Public cible</h3>
+      <ul class="plain">
+        <li><strong>Lycéen·nes en JPO</strong> qui n'ont jamais ouvert un terminal : mémo de commandes, indices, commandes tolérantes aux fautes.</li>
+        <li><strong>Lycéen·nes déjà geeks</strong> : le jeu doit rester crédible pour eux, avec du vrai Linux, du vrai chiffrement et de vrais logs.</li>
+        <li><strong>Parents accompagnateurs</strong> : ils repartent avec le message sur les données et une idée concrète de ce qu'on apprend en BUT.</li>
+      </ul>
+
+      <h3>Proposition de valeur</h3>
+      <p>Le jeu est une vitrine du BUT déguisée en thriller. En 30 minutes, un groupe touche à la sécurité, au système, au réseau, aux données et au développement, puis sort directement vers le stand où les étudiants présentent la formation. Le message éthique et durable fait partie des mécaniques de jeu, il n'est pas affiché sur un panneau à la sortie.</p>
+    </section>
+
+    <!-- 02 -->
+    <section id="gameplay" class="page">
+      <div class="sec-head"><span class="sec-num">02</span><h2>La boucle de gameplay</h2></div>
+
+      <h3>Core loop</h3>
+      <p class="pull">Trouver un objet dans la salle → l'utiliser comme clé d'un problème informatique → obtenir une vraie donnée technique (mot de passe, clé, port) → elle ouvre l'étape suivante, dans la salle ou à l'écran.</p>
+      <p>Il n'y a aucun chiffre sorti de nulle part : chaque code du jeu est une vraie donnée technique. Le code du coffre, par exemple, est le numéro de port du flux de fuite trouvé dans les logs.</p>
+
+      <h3>Mécaniques</h3>
+      <ul class="plain">
+        <li><strong>Deux pistes en parallèle au départ.</strong> À 4-5 joueurs, personne n'attend : 2 joueurs travaillent sur l'authentification pendant que 2-3 autres travaillent sur les calques. Les deux pistes se rejoignent au terminal.</li>
+        <li><strong>Jauge de fuite.</strong> Elle est affichée en grand sur l'écran de mission et monte avec le temps. Chaque erreur coûteuse la fait monter d'un coup, par exemple couper le mauvais câble réseau ou taper un mauvais code au coffre. La mise en quarantaine du serveur la fige pendant 5 minutes.</li>
+        <li><strong>Indices.</strong> Le bouton « Appeler le Commandant » lance une courte vidéo d'aide et fait monter la jauge de 5 %. Le game master peut aussi envoyer un indice depuis sa console.</li>
+        <li><strong>Retours physiques.</strong> LED et buzzer sur le coffre, loquet motorisé, écran LCD qui affiche les ordres du serveur.</li>
+      </ul>
+
+      <h3>Conditions de fin</h3>
+      <ul class="plain">
+        <li><strong>Victoire :</strong> le patch passe tous les tests, il est déployé, la jauge redescend à 0 % et la vidéo de fin se lance.</li>
+        <li><strong>Défaite douce :</strong> la jauge atteint 100 % ou le chrono de 30 min s'écoule. La vidéo « mauvaise fin » montre ce que la fuite coûte concrètement. Le game master peut accorder jusqu'à 15 min de rab, pour 45 min au maximum.</li>
+      </ul>
+    </section>
+
+    <!-- 03 -->
+    <section id="scenario" class="page">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Scénario &amp; thématique</h2></div>
+
+      <h3>L'univers</h3>
+      <p>La <strong>Cellule Zéro-Jour</strong> est un service de cyberdéfense installé dans un open space banal. Le Commandant <strong>Riad</strong> briefe les stagiaires en vidéo. <strong>Adrien Kovac</strong>, ingénieur de la cellule, a disparu il y a trois semaines. Ce soir, LERNA, le programme qu'il a laissé derrière lui, s'est réveillé. Les joueurs doivent entrer dans sa session, remonter sa piste et neutraliser LERNA.</p>
+
+      <h3>Le twist <span class="tag">éthique</span></h3>
+      <p>Kovac est un lanceur d'alerte, pas un cybercriminel. Il a découvert que la Cellule conservait tout « au cas où » : des pétaoctets de données citoyennes jamais supprimées, dupliquées sur des dizaines de serveurs, dont une partie était revendue à des courtiers pour financer le service. LERNA devait seulement publier la preuve de ce trafic. Mais Kovac l'a codé seul, vite, sans tests. Le programme se réplique au lieu de s'arrêter, et il est sur le point de publier les données elles-mêmes.</p>
+      <div class="pull">La donnée la plus sûre et la plus sobre, c'est celle qu'on ne stocke pas.</div>
+      <p>C'est le fil rouge du jeu. Le problème de sécurité (données accumulées, donc exposées) et le problème écologique (données dupliquées, donc stockées et alimentées pour rien) ont la même cause. On le retrouve à trois niveaux :</p>
+      <ul class="plain">
+        <li><strong>Scénario :</strong> la Cellule accumule tout, LERNA duplique tout.</li>
+        <li><strong>Gameplay :</strong> le patch final corrige LERNA pour qu'il supprime les copies inutiles sans toucher aux données légitimes.</li>
+        <li><strong>Conception :</strong> notre propre jeu ne collecte aucune donnée personnelle sur les visiteurs (voir section 06).</li>
+      </ul>
+
+      <h3>Ancrage R5.A.13 — économie durable et numérique</h3>
+      <p>Les vidéos du Commandant, moins de 45 s chacune, apportent du contenu sourcé : la valeur marchande des données personnelles, le coût réel d'une fuite, et l'empreinte du stockage de données inutiles. Les chiffres viendront de la CNIL, de l'ADEME et de l'Arcep ; Ilan les vérifie avant le tournage.</p>
+    </section>
+
+    <!-- 04 -->
+    <section id="enigmes" class="page">
+      <div class="sec-head"><span class="sec-num">04</span><h2>Les cinq épreuves</h2></div>
+      <p class="lede">Chaque épreuve correspond à une compétence du BUT Informatique. C'est le vrai argument pour les JPO : à la fin, le groupe a touché à tout le programme.</p>
+
+      <div class="evidence">
+        <div class="ev-head"><h4>Épreuve 1 — Double authentification</h4><span class="ev-num">PISTE A · 2 JOUEURS</span></div>
+        <div class="ev-meta"><span class="badge comp">Administrer — sécurité</span><span class="badge time">~7 min</span></div>
+        <dl class="split">
+          <dt>Physique</dt><dd>Fouille à l'aveugle dans la sacoche de Kovac : vraies cartes électroniques HS de l'IUT, câbles, slime, fausses araignées. Au fond se trouve son <strong>badge RFID</strong>. Sur son bureau : la photo de son chien « Pixel », un calendrier avec son anniversaire entouré, un mug « 1994 ».</dd>
+          <dt>Numérique</dt><dd>Écran de connexion de la Cellule. Badge sur le lecteur : « facteur 1 validé ». Il reste le mot de passe, qui se déduit des objets du bureau (<span class="mono">Pixel1994</span>). Au bout de 3 erreurs, le compte est verrouillé 30 s, comme un vrai système anti-force brute.</dd>
+          <dt>Leçon</dt><dd>Un mot de passe personnel se devine en observant quelqu'un (OSINT), d'où l'intérêt de la double authentification.</dd>
+        </dl>
+      </div>
+
+      <div class="evidence">
+        <div class="ev-head"><h4>Épreuve 2 — Le message à double fond</h4><span class="ev-num">PISTE B · 2-3 JOUEURS, EN PARALLÈLE</span></div>
+        <div class="ev-meta"><span class="badge comp">Administrer — cryptographie</span><span class="badge time">~6 min</span></div>
+        <dl class="split">
+          <dt>Physique</dt><dd>Deux feuilles de rhodoïd couvertes de traits sans signification. Superposées devant la lampe du bureau, elles révèlent un mot : <strong>SOBRE</strong>. Au mur, un poster « déco » est en réalité une grille de Vigénère.</dd>
+          <dt>Numérique</dt><dd>Rien pour l'instant : la piste B détient une clé qui ne sert à rien tant que la piste A n'a pas ouvert la session. C'est ce qui force les deux groupes à se retrouver.</dd>
+          <dt>Leçon</dt><dd>Une clé de chiffrement ne se range pas au même endroit que le fichier chiffré.</dd>
+        </dl>
+      </div>
+
+      <div class="evidence">
+        <div class="ev-head"><h4>Épreuve 3 — Le terminal de Kovac</h4><span class="ev-num">TOUTE L'ÉQUIPE</span></div>
+        <div class="ev-meta"><span class="badge comp">Administrer — système</span><span class="badge comp">Gérer des données</span><span class="badge time">~8 min</span></div>
+        <dl class="split">
+          <dt>Numérique</dt><dd>Un terminal simulé dans le navigateur. Le « mémo du stagiaire » plastifié liste 6 commandes : <span class="mono">ls</span>, <span class="mono">ls -a</span>, <span class="mono">cd</span>, <span class="mono">cat</span>, <span class="mono">dechiffre</span>, <span class="mono">aide</span>. <span class="mono">ls -a</span> révèle un fichier caché, <span class="mono">.lerna.conf.enc</span>. Avec <span class="mono">dechiffre --cle SOBRE</span>, on obtient le nom du serveur qui fuit (<span class="mono">srv-03</span>) et l'emplacement de son journal.</dd>
+          <dt>Données</dt><dd>Le journal s'ouvre dans un visualiseur avec des filtres : heure, serveur, volume sortant. Il contient environ 2 000 lignes de trafic normal et un seul flux anormal à 3 h 12, avec 48 Go sortants depuis srv-03. Le port de ce flux est à retenir.</dd>
+          <dt>Leçon</dt><dd>Une attaque laisse des traces, et savoir filtrer des données est une compétence à part entière.</dd>
+        </dl>
+      </div>
+
+      <div class="evidence">
+        <div class="ev-head"><h4>Épreuve 4 — Quarantaine</h4><span class="ev-num">PHYSIQUE · RÉSEAU</span></div>
+        <div class="ev-meta"><span class="badge comp">Administrer — réseau</span><span class="badge time">~4 min</span></div>
+        <dl class="split">
+          <dt>Physique</dt><dd>Une mini-baie de brassage avec des câbles RJ45 de réemploi et des ports étiquetés SRV-01 à SRV-04, INTERNET et QUARANTAINE. Elle est visible dès le début de la partie, ce qui en fait un piège tentant. Il faut débrancher le câble de srv-03 et le rebrancher sur QUARANTAINE. Si on débranche le mauvais serveur, l'écran affiche « Vous venez de couper le service des urgences » et la jauge prend +10 %.</dd>
+          <dt>Numérique</dt><dd>L'ESP32 détecte quel câble est branché où. La jauge se fige pendant 5 minutes, car LERNA cherche un autre chemin. Le coffre se tape avec le port trouvé dans les logs : le loquet s'ouvre et libère la clé USB <span class="mono">antidote</span>.</dd>
+          <dt>Leçon</dt><dd>Isoler avant de réparer : c'est le premier réflexe face à un incident.</dd>
+        </dl>
+      </div>
+
+      <div class="evidence">
+        <div class="ev-head"><h4>Épreuve 5 — Le patch</h4><span class="ev-num">TOUTE L'ÉQUIPE · FINALE</span></div>
+        <div class="ev-meta"><span class="badge comp">Réaliser</span><span class="badge comp">Optimiser — qualité</span><span class="badge time">~5 min</span></div>
+        <dl class="split">
+          <dt>Numérique</dt><dd>La clé USB contient le code de l'antidote, mais Kovac l'a écrit sans tests et il est bugué. À l'écran, 7 blocs de code sont à remettre dans l'ordre par glisser-déposer, et une condition est à corriger. Le bouton « Lancer les tests » exécute 3 tests : <em>supprime les copies illégitimes</em>, <em>ne supprime pas les données des citoyens</em>, <em>s'arrête</em>. Quand les 3 sont verts, on peut cliquer sur « Déployer ».</dd>
+          <dt>Leçon</dt><dd>Le twist du scénario devient la mécanique : ce qui sauve les données, c'est d'avoir testé.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="parcours" class="page">
+      <div class="sec-head"><span class="sec-num">05</span><h2>Parcours minuté</h2></div>
+      <ol class="journey">
+        <li><span class="jt">00:00</span><span class="jb">Briefing</span>Vidéo du Commandant (45 s). Le chrono de 30:00 démarre et la jauge est à 10 %.</li>
+        <li><span class="jt">00:02</span><span class="jb">Séparation en deux pistes</span>Piste A : sacoche puis badge, bureau puis mot de passe. Piste B : calques puis clé SOBRE, et repérage de la grille au mur.</li>
+        <li><span class="jt">00:09</span><span class="jb">Session ouverte</span>Vidéo 2 : qui est Kovac. Toute l'équipe se regroupe devant le terminal.</li>
+        <li><span class="jt">00:12</span><span class="jb">Fichier déchiffré</span>On apprend que srv-03 fuit et où se trouve le journal.</li>
+        <li><span class="jt">00:17</span><span class="jb">Flux trouvé dans les logs</span>Le port du flux anormal devient le code du coffre.</li>
+        <li><span class="jt">00:20</span><span class="jb">Serveur en quarantaine</span>La jauge se fige. Vidéo 3 : ce que coûte l'accumulation de données.</li>
+        <li><span class="jt">00:22</span><span class="jb">Coffre ouvert</span>On récupère la clé USB antidote.</li>
+        <li><span class="jt">00:24</span><span class="jb">Patch</span>Blocs remis en ordre, tests au vert, déploiement.</li>
+        <li><span class="jt">00:28</span><span class="jb">Épilogue</span>La jauge tombe à 0 et la vidéo de fin se lance. L'écran récapitule les compétences du BUT mobilisées pendant la partie, et le groupe est invité à rejoindre les étudiants du stand.</li>
+        <li><span class="jt">+ 1 min 30</span><span class="jb">Reset</span>Depuis sa console, le game master lance un nouveau port aléatoire, referme le coffre et remet la jauge à zéro. Il remet aussi physiquement le câble et le badge.</li>
+      </ol>
+      <p>Le port change à chaque partie : un groupe qui a regardé les précédents par-dessus l'épaule ne connaît pas le code du coffre.</p>
+    </section>
+
+    <!-- 06 -->
+    <section id="eco" class="page-wide">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Éco-conception</h2></div>
+      <p class="lede" style="max-width:70ch;">Le scénario parle de sobriété, alors nos choix de conception doivent en faire autant. Chaque choix ci-dessous est vérifiable dans le code ou dans la facture.</p>
+
+      <div class="grid3">
+        <div class="card" style="margin:0;">
+          <h4 class="k">Matériel</h4>
+          <ul>
+            <li><strong>Réemploi avant achat.</strong> PC, écrans, routeur, câbles RJ45, chargeur, clé USB et bois du coffre viennent du parc de l'IUT ou de l'équipe.</li>
+            <li>Le contenu de la sacoche vient de vrais <strong>DEEE</strong> : des cartes HS récupérées, pas du plastique neuf.</li>
+            <li><strong>Un seul ESP32</strong> pour tout le bureau, au lieu d'un microcontrôleur par poste.</li>
+            <li><strong>Zéro soudure définitive</strong> (borniers et connecteurs Dupont) : tous les composants se récupèrent après la JPO.</li>
+            <li>Servo à pignons métal plutôt que plastique, pour moins de casse et moins de remplacements.</li>
+          </ul>
+        </div>
+        <div class="card" style="margin:0;">
+          <h4 class="k">Logiciel</h4>
+          <ul>
+            <li><strong>100 % local</strong> sur le réseau de la salle : aucun cloud et aucun streaming. En bonus, le jeu marche même si le Wi-Fi de l'IUT tombe.</li>
+            <li>Vidéos en 720p et de moins de 45 s, compressées, mises en cache une seule fois.</li>
+            <li><strong>Push plutôt que polling</strong> : MQTT (en-tête de 2 octets) et WebSocket, au lieu d'interroger le serveur en boucle.</li>
+            <li>Budget de poids : moins de 500 Ko de JS et de CSS hors vidéos, avec du lazy loading Angular.</li>
+            <li>Mise en veille de l'ESP32, du rétroéclairage du LCD et des écrans entre deux parties.</li>
+          </ul>
+        </div>
+        <div class="card" style="margin:0;">
+          <h4 class="k">Données</h4>
+          <ul>
+            <li><strong>Aucune donnée personnelle collectée</strong> : pas de nom, pas d'email, pas de photo, seulement un pseudo d'équipe. On ne fait pas ce que le jeu dénonce.</li>
+            <li>Statistiques anonymes (temps par épreuve, indices utilisés) pour ajuster la difficulté, <strong>purgées automatiquement</strong> après la JPO.</li>
+            <li>Tous les logs du jeu sont <strong>synthétiques</strong>, produits par notre générateur.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Mesurer au lieu d'affirmer</h3>
+      <ul class="plain">
+        <li><strong>EcoIndex et Lighthouse dans la CI</strong> : une note minimale bloque la fusion si une page grossit trop.</li>
+        <li><strong>Mesure réelle au wattmètre</strong> (prêté par l'IUT) de la consommation d'une partie complète. La valeur mesurée s'affiche sur l'écran de fin, pour que le visiteur voie l'empreinte de ce qu'il vient de jouer.</li>
+        <li>Une grille de bonnes pratiques tirée du <strong>RGESN</strong> (référentiel général d'écoconception des services numériques) est revue à chaque fin de sprint.</li>
+      </ul>
+    </section>
+
+    <!-- 07 -->
+    <section id="tech" class="page">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Spécifications techniques</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Couche</th><th>Techno</th><th>Pourquoi</th></tr></thead>
+          <tbody>
+            <tr><td>Frontend</td><td class="mono">Angular + TailwindCSS + xterm.js</td><td>Compétence de Maxime. xterm.js affiche un vrai rendu de terminal dans le navigateur.</td></tr>
+            <tr><td>Backend</td><td class="mono">NestJS (TypeScript)</td><td>Un seul langage pour tout le web. Des modules séparés pour la machine d'état, le MQTT et le terminal.</td></tr>
+            <tr><td>Base de données</td><td class="mono">PostgreSQL + TypeORM</td><td>Sessions, tentatives et statistiques anonymes.</td></tr>
+            <tr><td>Message broker</td><td class="mono">Mosquitto (MQTT)</td><td>Découple le matériel du backend : c'est la brique « architecture distribuée » du brief.</td></tr>
+            <tr><td>Temps réel</td><td class="mono">WebSocket (Socket.io)</td><td>Jauge, chrono et vidéos poussés vers les écrans.</td></tr>
+            <tr><td>Firmware</td><td class="mono">C++ / Arduino core, ESP32</td><td>Wi-Fi intégré, assez de GPIO pour tout le bureau.</td></tr>
+            <tr><td>Données de jeu</td><td class="mono">Générateur de logs (TypeScript)</td><td>Environ 2 000 lignes réalistes et un port aléatoire à chaque session.</td></tr>
+            <tr><td>Infra</td><td class="mono">Docker Compose + Nginx</td><td>Un <span class="mono">docker compose up</span> monte toute la salle.</td></tr>
+            <tr><td>Qualité</td><td class="mono">Jest, Cypress, ESLint, GitHub Actions</td><td>Tests à chaque push, comme l'exige le brief pour valider un sprint.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Trois interfaces</h3>
+      <ul class="plain">
+        <li><strong>Poste de Kovac</strong> (PC joueur) : connexion, terminal, visualiseur de logs, éditeur du patch.</li>
+        <li><strong>Écran de mission</strong> (TV murale) : vidéos du Commandant, jauge, chrono, lisibles à 3 m.</li>
+        <li><strong>Console game master</strong> (téléphone) : lancer et réinitialiser une partie, envoyer un indice, ouvrir le coffre à distance en cas de panne, voir les statistiques.</li>
+      </ul>
+      <h3>Ergonomie</h3>
+      <p>Tout est lisible à 2 m, avec un contraste AA minimum. Le terminal ignore les majuscules et suggère la bonne commande en cas de faute de frappe. Aucun texte long n'apparaît à l'écran pendant l'action : les explications passent par les vidéos.</p>
+    </section>
+
+    <!-- 08 -->
+    <section id="archi" class="page-wide">
+      <div class="sec-head"><span class="sec-num">08</span><h2>Architecture — vue éclatée</h2></div>
+      <p class="lede" style="max-width:70ch;">Tout le matériel tient sur le bureau de Kovac et remonte à un seul ESP32 caché dans le socle du coffre. L'ESP32 ne prend aucune décision : il lit les capteurs, pilote les actionneurs et relaie tout au backend.</p>
+
+      <figure>
+        <svg viewBox="0 0 1000 560" role="img" aria-label="Vue éclatée du bureau de Kovac : au centre, le coffre contient l'ESP32. Autour, reliés à lui : écran LCD et clavier via I2C, lecteur de badge RFID via SPI, servo du loquet en PWM, LED et buzzer en GPIO, baie de brassage en GPIO par balayage. L'ESP32 communique en Wi-Fi avec le broker MQTT.">
+          <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55">
+            <line x1="170" y1="130" x2="420" y2="255"/>
+            <line x1="500" y1="130" x2="500" y2="240"/>
+            <line x1="830" y1="130" x2="580" y2="255"/>
+            <line x1="170" y1="430" x2="420" y2="325"/>
+            <line x1="500" y1="430" x2="500" y2="340"/>
+            <line x1="830" y1="430" x2="580" y2="325"/>
+          </g>
+
+          <rect x="340" y="200" width="320" height="170" rx="8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5"/>
+          <text x="352" y="220" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity="0.6">COFFRE — socle</text>
+          <rect x="400" y="240" width="200" height="100" rx="6" fill="var(--accent2-soft)" stroke="var(--accent2)" stroke-width="2"/>
+          <text x="500" y="282" text-anchor="middle" font-family="Oswald" font-size="16" letter-spacing="1" fill="var(--accent2)">ESP32</text>
+          <text x="500" y="302" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.75">capteurs + actionneurs</text>
+          <text x="500" y="318" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.75">aucune logique de jeu</text>
+
+          <line x1="600" y1="290" x2="700" y2="290" stroke="var(--accent2)" stroke-width="1.5"/>
+          <polygon points="700,285 710,290 700,295" fill="var(--accent2)"/>
+          <text x="760" y="286" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--accent2)">Wi-Fi → MQTT</text>
+          <text x="760" y="302" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity="0.6">vers le serveur local</text>
+
+          <g font-family="IBM Plex Mono" fill="currentColor">
+            <rect x="60" y="50" width="220" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="170" y="84" text-anchor="middle" font-size="12.5">Lecteur badge RC522</text>
+            <text x="170" y="104" text-anchor="middle" font-size="10" opacity="0.6">SPI · épreuve 1</text>
+
+            <rect x="390" y="50" width="220" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="500" y="84" text-anchor="middle" font-size="12.5">LCD 16×2 + clavier 4×4</text>
+            <text x="500" y="104" text-anchor="middle" font-size="10" opacity="0.6">I2C partagé (PCF8574) · coffre</text>
+
+            <rect x="720" y="50" width="220" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="830" y="84" text-anchor="middle" font-size="12.5">LED + buzzer</text>
+            <text x="830" y="104" text-anchor="middle" font-size="10" opacity="0.6">GPIO · retours bon/faux</text>
+
+            <rect x="60" y="430" width="220" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="170" y="464" text-anchor="middle" font-size="12.5">Servo MG90S + loquet</text>
+            <text x="170" y="484" text-anchor="middle" font-size="10" opacity="0.6">PWM · ouverture coffre</text>
+
+            <rect x="390" y="430" width="220" height="80" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="500" y="464" text-anchor="middle" font-size="12.5">Alimentation 5 V</text>
+            <text x="500" y="484" text-anchor="middle" font-size="10" opacity="0.6">chargeur de réemploi</text>
+
+            <rect x="720" y="430" width="220" height="80" rx="5" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="830" y="464" text-anchor="middle" font-size="12.5">Baie de brassage 6 ports</text>
+            <text x="830" y="484" text-anchor="middle" font-size="10" opacity="0.6">GPIO par balayage · épreuve 4</text>
+          </g>
+        </svg>
+        <figcaption>Fig. 1 — Le bureau de Kovac en vue éclatée. La baie de brassage se lit comme le clavier matriciel : l'ESP32 active chaque port serveur un par un et regarde lequel arrive sur la prise QUARANTAINE.</figcaption>
+      </figure>
+
+      <figure>
+        <svg viewBox="0 0 1020 380" role="img" aria-label="Flux de données sur le réseau local : l'ESP32 échange en MQTT avec le broker Mosquitto ; le backend NestJS s'abonne au broker et stocke dans PostgreSQL ; il sert en REST et WebSocket trois clients : le poste de Kovac, l'écran de mission et la console game master. Aucun appel vers Internet.">
+          <rect x="10" y="10" width="1000" height="360" rx="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 5" opacity="0.5"/>
+          <text x="26" y="34" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" opacity="0.65">RÉSEAU LOCAL DE LA SALLE — HORS LIGNE, AUCUN CLOUD</text>
+
+          <g font-family="IBM Plex Mono" fill="currentColor">
+            <rect x="40" y="150" width="150" height="70" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="115" y="181" text-anchor="middle" font-family="Oswald" font-size="13">ESP32</text>
+            <text x="115" y="199" text-anchor="middle" font-size="10" opacity="0.65">bureau de Kovac</text>
+
+            <line x1="198" y1="185" x2="262" y2="185" stroke="currentColor" stroke-width="1.5"/>
+            <polygon points="262,180 272,185 262,190" fill="currentColor"/>
+            <polygon points="198,180 188,185 198,190" fill="currentColor"/>
+            <text x="230" y="172" text-anchor="middle" font-size="10" fill="var(--accent2)">MQTT</text>
+
+            <rect x="272" y="150" width="150" height="70" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="347" y="181" text-anchor="middle" font-family="Oswald" font-size="13">MOSQUITTO</text>
+            <text x="347" y="199" text-anchor="middle" font-size="10" opacity="0.65">broker</text>
+
+            <line x1="430" y1="185" x2="494" y2="185" stroke="currentColor" stroke-width="1.5"/>
+            <polygon points="494,180 504,185 494,190" fill="currentColor"/>
+            <polygon points="430,180 420,185 430,190" fill="currentColor"/>
+            <text x="462" y="172" text-anchor="middle" font-size="10" fill="var(--accent2)">pub/sub</text>
+
+            <rect x="504" y="140" width="190" height="90" rx="6" fill="var(--accent2-soft)" stroke="var(--accent2)" stroke-width="2"/>
+            <text x="599" y="172" text-anchor="middle" font-family="Oswald" font-size="13" fill="var(--accent2)">BACKEND NESTJS</text>
+            <text x="599" y="191" text-anchor="middle" font-size="10" opacity="0.75">machine d'état du jeu</text>
+            <text x="599" y="207" text-anchor="middle" font-size="10" opacity="0.75">terminal simulé · générateur</text>
+
+            <line x1="599" y1="238" x2="599" y2="276" stroke="currentColor" stroke-width="1.5"/>
+            <polygon points="594,276 599,286 604,276" fill="currentColor"/>
+            <rect x="524" y="286" width="150" height="50" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="599" y="316" text-anchor="middle" font-size="11">PostgreSQL</text>
+
+            <line x1="702" y1="160" x2="790" y2="95" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="702" y1="185" x2="790" y2="185" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="702" y1="210" x2="790" y2="275" stroke="currentColor" stroke-width="1.5"/>
+            <text x="745" y="176" text-anchor="middle" font-size="10" fill="var(--accent2)">REST + WS</text>
+
+            <rect x="790" y="62" width="200" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="890" y="89" text-anchor="middle" font-family="Oswald" font-size="12.5">POSTE DE KOVAC</text>
+            <text x="890" y="107" text-anchor="middle" font-size="9.5" opacity="0.65">login · terminal · logs · patch</text>
+
+            <rect x="790" y="153" width="200" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="890" y="180" text-anchor="middle" font-family="Oswald" font-size="12.5">ÉCRAN DE MISSION</text>
+            <text x="890" y="198" text-anchor="middle" font-size="9.5" opacity="0.65">vidéos · jauge · chrono</text>
+
+            <rect x="790" y="244" width="200" height="64" rx="6" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+            <text x="890" y="271" text-anchor="middle" font-family="Oswald" font-size="12.5">CONSOLE GAME MASTER</text>
+            <text x="890" y="289" text-anchor="middle" font-size="9.5" opacity="0.65">reset · indices · ouverture forcée</text>
+          </g>
+        </svg>
+        <figcaption>Fig. 2 — Le backend est la seule source de vérité. Les trois écrans sont des routes de la même application Angular, et rien ne sort du réseau de la salle.</figcaption>
+      </figure>
+    </section>
+
+    <!-- 09 -->
+    <section id="code" class="page">
+      <div class="sec-head"><span class="sec-num">09</span><h2>Ce qu'il faut coder</h2></div>
+
+      <div class="stack">
+        <h4>Firmware · C++ (Arduino core, ESP32)</h4>
+        <ul>
+          <li>Lecture du badge avec <span class="lib">MFRC522</span> (SPI), UID publié en MQTT</li>
+          <li>Clavier et LCD sur un bus I2C partagé (<span class="lib">Keypad_I2C</span>, <span class="lib">LiquidCrystal_I2C</span>)</li>
+          <li>Balayage de la baie de brassage : chaque port serveur activé à tour de rôle, lecture de la prise QUARANTAINE</li>
+          <li>Servo du loquet avec <span class="lib">ESP32Servo</span>, LED et buzzer</li>
+          <li><span class="lib">PubSubClient</span> avec reconnexion automatique et message « last will », <span class="lib">ArduinoJson</span></li>
+          <li>Veille légère entre deux parties</li>
+        </ul>
+      </div>
+
+      <div class="stack">
+        <h4>Backend · TypeScript (NestJS)</h4>
+        <ul>
+          <li>Machine d'état : BRIEFING → AUTH → TERMINAL → LOGS → QUARANTAINE → COFFRE → PATCH → VICTOIRE / DÉFAITE</li>
+          <li><span class="lib">TerminalModule</span> : système de fichiers virtuel en JSON et liste blanche de commandes. <strong>Jamais de vrai shell.</strong></li>
+          <li><span class="lib">LogGenerator</span> : environ 2 000 lignes, un flux anormal, un port aléatoire à chaque session</li>
+          <li><span class="lib">PatchModule</span> : vérifie l'ordre des blocs et renvoie le résultat de chacun des 3 tests</li>
+          <li>REST : <span class="mono">POST /sessions</span>, <span class="mono">/login</span>, <span class="mono">/terminal</span>, <span class="mono">GET /logs?srv=&amp;from=&amp;minVolume=</span>, <span class="mono">POST /patch</span>, <span class="mono">/hint</span>, <span class="mono">/gm/*</span></li>
+          <li>Passerelle WebSocket : jauge, chrono, déclenchement des vidéos</li>
+          <li>Documentation OpenAPI générée avec <span class="lib">@nestjs/swagger</span></li>
+        </ul>
+      </div>
+
+      <div class="stack">
+        <h4>Frontend · TypeScript (Angular + Tailwind)</h4>
+        <ul>
+          <li>Écran de connexion en deux facteurs (attend l'événement badge, puis demande le mot de passe)</li>
+          <li>Terminal avec <span class="lib">xterm.js</span>, historique et suggestions de commandes</li>
+          <li>Visualiseur de logs : tableau filtrable et triable, pagination côté serveur</li>
+          <li>Éditeur du patch en glisser-déposer (<span class="lib">@angular/cdk/drag-drop</span>) et panneau de tests</li>
+          <li>Écran de mission : lecteur vidéo séquencé, jauge animée en CSS</li>
+          <li>Console game master (responsive, pensée pour téléphone)</li>
+        </ul>
+      </div>
+
+      <h3>Topics MQTT</h3>
+      <div class="stack">
+        <div class="topic-row"><span class="t">lerna/badge/scan</span><span class="d">ESP32 → backend · UID du badge</span></div>
+        <div class="topic-row"><span class="t">lerna/coffre/code</span><span class="d">ESP32 → backend · code tapé</span></div>
+        <div class="topic-row"><span class="t">lerna/baie/etat</span><span class="d">ESP32 → backend · quel serveur est branché sur quel port</span></div>
+        <div class="topic-row"><span class="t">lerna/coffre/cmd</span><span class="d">backend → ESP32 · ouvrir, fermer, texte LCD, LED</span></div>
+        <div class="topic-row"><span class="t">lerna/esp/status</span><span class="d">last will · détecte la déconnexion de l'ESP32</span></div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="materiel" class="page-wide">
+      <div class="sec-head"><span class="sec-num">10</span><h2>Matériel &amp; budget</h2></div>
+      <p class="lede" style="max-width:70ch;">Plafond de 200 € tout compris. Avec le réemploi, on prévoit environ 116 €, marge de casse incluse. Même si on doit acheter le serveur, on reste sous le plafond.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Achat neuf</th><th class="num">Qté</th><th>Rôle</th><th class="num">Prix indicatif</th></tr></thead>
+          <tbody>
+            <tr><td>ESP32 DevKit V1</td><td class="num">2</td><td>1 en service et 1 de secours pour la JPO</td><td class="num">16 €</td></tr>
+            <tr><td>Kit RFID RC522 (lecteur + badge + carte)</td><td class="num">1</td><td>Épreuve 1</td><td class="num">5 €</td></tr>
+            <tr><td>Clavier membrane 4×4 + module PCF8574</td><td class="num">1</td><td>Code du coffre, en I2C pour économiser des broches</td><td class="num">5 €</td></tr>
+            <tr><td>LCD 16×2 I2C</td><td class="num">1</td><td>Messages du serveur</td><td class="num">6 €</td></tr>
+            <tr><td>Servo MG90S (pignons métal)</td><td class="num">1</td><td>Loquet du coffre</td><td class="num">5 €</td></tr>
+            <tr><td>LED, résistances, buzzer</td><td class="num">lot</td><td>Retours visuels et sonores</td><td class="num">3 €</td></tr>
+            <tr><td>Embases RJ45 keystone</td><td class="num">6</td><td>Baie de brassage détectable</td><td class="num">10 €</td></tr>
+            <tr><td>Borniers, connecteurs Dupont, plaque à trous</td><td class="num">lot</td><td>Câblage démontable, sans soudure définitive</td><td class="num">10 €</td></tr>
+            <tr><td>Slime et fausses araignées</td><td class="num">lot</td><td>Sacoche</td><td class="num">6 €</td></tr>
+            <tr><td>Rhodoïd A4 + feutres permanents</td><td class="num">3 + 2</td><td>Épreuve 2</td><td class="num">5 €</td></tr>
+            <tr><td>Impressions : mémo, grille de Vigénère, photo, calendrier, étiquettes</td><td class="num">lot</td><td>Décor et indices</td><td class="num">8 €</td></tr>
+            <tr><td>Charnières, loquet, visserie, colle, colliers</td><td class="num">lot</td><td>Coffre et finitions</td><td class="num">12 €</td></tr>
+            <tr class="sub"><td>Marge casse et imprévus</td><td class="num">—</td><td>Composant grillé, servo cassé</td><td class="num">25 €</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3">Total prévu</td><td class="num">116 €</td></tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="gauge" aria-label="Budget : 116 € prévus sur 200 €, 165 € dans le pire cas">
+        <div class="bar"><span style="width:58%;background:var(--accent2);"></span><span style="width:24.5%;background:var(--accent2-soft);"></span></div>
+        <span class="lbl">116 € prévus · 165 € au pire · plafond 200 €</span>
+      </div>
+
+      <h3>Réemploi, 0 €</h3>
+      <p>PC du poste de Kovac, écran de mission, machine serveur (portable reconditionné ou PC de l'IUT), routeur Wi-Fi (ancienne box), câbles RJ45 et patch de la réserve réseau, chargeur USB 5 V 2 A, clé USB, sacoche, cartes électroniques HS, bois de caisse ou chutes du fablab pour le coffre, cadre photo et mug.</p>
+      <p><strong>Pire cas :</strong> si l'IUT ne peut pas prêter de machine serveur, on achète un Raspberry Pi 4 (environ 50 €), ce qui porte le total à environ 165 €, toujours sous le plafond.</p>
+      <p style="font-size:14px;color:var(--ink-soft);">Prix indicatifs de fournisseurs d'électronique grand public (GoTronic, Kubii, Amazon), à confirmer au moment de la commande.</p>
+    </section>
+
+    <!-- 11 -->
+    <section id="demarche" class="page">
+      <div class="sec-head"><span class="sec-num">11</span><h2>Démarche projet</h2></div>
+
+      <h3>Du besoin flou au besoin formalisé</h3>
+      <p>Le besoin de départ tient en une phrase : « un escape game pour les JPO ». Pour le préciser :</p>
+      <ul class="plain">
+        <li><strong>Entretien avec les référents</strong> (fin septembre), qui a fixé les contraintes : 30 min, 4-5 joueurs, budget, lien avec R5.A.13.</li>
+        <li><strong>Trois personas :</strong> la lycéenne qui n'a jamais codé, le lycéen déjà geek, le parent accompagnateur.</li>
+        <li><strong>User stories</strong> avec critères d'acceptation. Exemple : « En tant que game master, je relance une partie en moins de 2 min. »</li>
+        <li>Les exigences non fonctionnelles sont formalisées : reset rapide, fonctionnement hors ligne, aucune donnée personnelle, budget.</li>
+      </ul>
+
+      <h3>Itératif et intégration continue</h3>
+      <ul class="plain">
+        <li>Sprints de 2 semaines, backlog sur un tableau Kanban, démonstration au référent à chaque fin de sprint.</li>
+        <li><strong>CI GitHub Actions</strong> à chaque push : lint, tests Jest, build des images Docker, parcours Cypress, EcoIndex.</li>
+        <li>Branches de fonctionnalité, pull requests relues par un autre membre, messages de commit normalisés.</li>
+      </ul>
+
+      <h3>Amélioration continue par les données</h3>
+      <p>Chaque playtest (autres groupes, proches, lycéens si possible) alimente les statistiques anonymes : temps par épreuve, indices demandés, épreuve où l'équipe bloque. La console game master les affiche. On ajuste la difficulté à chaque sprint (nombre de lignes de logs, indices automatiques après X minutes) jusqu'à tenir les 30 minutes.</p>
+
+      <h3>Répartition — profils en T</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Membre</th><th>Spécialité</th><th>En renfort</th></tr></thead>
+          <tbody>
+            <tr><td>Tanim Veer</td><td>Firmware ESP32, câblage, coffre, baie, recherche de matériel de réemploi</td><td>Organisation, serveur Linux</td></tr>
+            <tr><td>Maxime Courdavault</td><td>Frontend Angular (terminal, logs, patch), infra Docker/CI</td><td>Câblage IoT</td></tr>
+            <tr><td>Jean-François Dena</td><td>Backend NestJS : machine d'état, API, MQTT, BDD, doc OpenAPI</td><td>Pont MQTT avec le firmware</td></tr>
+            <tr><td>Ethan Mebaley Kahel</td><td>Tests (Jest, Cypress, recette matérielle), générateur de logs</td><td>Câblage, front</td></tr>
+            <tr><td>Ilan Nguelet</td><td>Besoin et personas, contenu des vidéos, suivi éco-conception (EcoIndex, wattmètre, RGESN)</td><td>Statistiques de playtest</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section id="prod" class="page-wide">
+      <div class="sec-head"><span class="sec-num">12</span><h2>Plan de production</h2></div>
+
+      <div class="grid3">
+        <div class="prio">
+          <h4><span class="dot" style="background:var(--accent);"></span>Must-have</h4>
+          <ul>
+            <li>Les 5 épreuves jouables de bout en bout</li>
+            <li>Machine d'état, API, BDD</li>
+            <li>ESP32 : badge, clavier, LCD, servo, baie</li>
+            <li>Liaison MQTT et WebSocket</li>
+            <li>Console game master : reset et ouverture forcée</li>
+            <li>Tests automatisés et CI</li>
+          </ul>
+        </div>
+        <div class="prio">
+          <h4><span class="dot" style="background:#9c6b16;"></span>Should-have</h4>
+          <ul>
+            <li>Port aléatoire à chaque session</li>
+            <li>Système d'indices</li>
+            <li>Statistiques anonymes et purge automatique</li>
+            <li>EcoIndex bloquant dans la CI</li>
+            <li>Suggestions de commandes dans le terminal</li>
+          </ul>
+        </div>
+        <div class="prio">
+          <h4><span class="dot" style="background:var(--accent2);"></span>Nice-to-have</h4>
+          <ul>
+            <li>Consommation mesurée affichée en fin de partie</li>
+            <li>Mode de difficulté (collège/lycée ou experts)</li>
+            <li>Version anglaise pour la JPO</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Jalons</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Jalon</th><th>Échéance</th><th>Livrable</th></tr></thead>
+          <tbody>
+            <tr><td>J1 — Conception</td><td class="num">Fin sept. 2026</td><td>Ce GDD : scénario, épreuves, faisabilité, budget</td></tr>
+            <tr><td>J2 — MVP</td><td class="num">Mi-nov. 2026</td><td>Tranche verticale : épreuve 1 complète (badge → MQTT → backend → écran de connexion) et coffre qui s'ouvre, avec reset</td></tr>
+            <tr><td>J3 — Bêta</td><td class="num">Mi-janv. 2027</td><td>Les 5 épreuves, playtests chronométrés, version intégrée et rapport d'équipe</td></tr>
+            <tr><td>J4 — JPO</td><td class="num">Mi-fév. 2027</td><td>Produit fini, reset en moins de 2 min, exposition publique</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 13 -->
+    <section id="risques" class="page">
+      <div class="sec-head"><span class="sec-num">13</span><h2>Analyse des risques</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Risque</th><th>Impact</th><th>Stratégie d'atténuation</th></tr></thead>
+          <tbody>
+            <tr><td>Des visiteurs bloquent au terminal</td><td class="impact-H">H</td><td>Mémo de commandes, commandes tolérantes, indices automatiques, game master qui peut pousser un indice</td></tr>
+            <tr><td>Panne de servo, RFID ou ESP32 en pleine JPO</td><td class="impact-H">H</td><td>ESP32 de secours déjà flashé, ouverture forcée depuis la console, validation manuelle de chaque épreuve par le game master</td></tr>
+            <tr><td>Parties qui dépassent 30 min</td><td class="impact-M">M</td><td>Statistiques de playtest par épreuve, difficulté réglable, rab de 15 min au maximum</td></tr>
+            <tr><td>Wi-Fi de l'IUT saturé le jour J</td><td class="impact-M">M</td><td>Réseau local autonome avec son propre routeur, tout en local</td></tr>
+            <tr><td>Planning serré</td><td class="impact-M">M</td><td>MVP limité à l'épreuve 1 et au coffre, les épreuves 2 à 5 ajoutées une par sprint</td></tr>
+            <tr><td>Matériel de réemploi introuvable</td><td class="impact-L">L</td><td>Pire cas chiffré à environ 165 €, sous le plafond de 200 €</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      DOSSIER PROTOCOLE LERNA — CELLULE ZÉRO-JOUR · Équipe BUT3 305/306 — Tanim Veer, Jean-François Dena, Maxime Courdavault, Ethan Mebaley Kahel, Ilan Nguelet
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  var PASSWORD = 'seikatsu';
+  var gate = document.getElementById('gate');
+  var card = document.getElementById('gate-card');
+  var form = document.getElementById('gate-form');
+  var input = document.getElementById('gate-input');
+  var err = document.getElementById('gate-err');
+  var shell = document.querySelector('.shell');
+
+  shell.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = 'hidden';
+  input.focus();
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(input.value.trim().toLowerCase() === PASSWORD){
+      gate.remove();
+      shell.removeAttribute('aria-hidden');
+      document.body.style.overflow = '';
+    } else {
+      err.hidden = false;
+      input.value = '';
+      input.focus();
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+    }
+  });
+})();
+</script>
